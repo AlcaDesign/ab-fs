@@ -1,0 +1,27 @@
+{
+  "name": "ab-fs",
+  "version": "0.1.0",
+  "description": "The way I like to FS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlcaDesign/ab-fs.git"
+  },
+  "keywords": [
+    "fs",
+	"filesystem",
+    "promise",
+    "alca"
+  ],
+  "author": "Jacob \"Alca\" Foster",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/AlcaDesign/ab-fs/issues"
+  },
+  "homepage": "https://github.com/AlcaDesign/ab-fs#readme",
+  "dependencies": {
+  }
+}
