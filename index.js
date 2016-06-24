@@ -18,65 +18,98 @@ limitations under the License.
 
 const fs = require('fs');
 
-function readFile(filename, options) {
-	return new Promise((resolve, reject) =>
-			fs.readFile(filename, options || {}, (err, data) => {
-					if(err) reject(err);
-					else resolve(data);
-				})
-		);
+let readFile = promisify('readFile'),
+	writeFile = promisify('writeFile');
+
+function promRes(resolve, reject) {
+	return (err, data) => {
+			if(err) {
+				return reject(err);
+			}
+			return resolve(data);
+		};
 }
 
-function readFileUTF8(filename, options) {
-	if(typeof options == 'object') {
-		options.encoding = 'utf8';
-	}
-	return readFile(filename, options || 'utf8');
-}
-
-function readJSON(filename) {
-	return readFileUTF8(filename)
-		.then(data => JSON.parse(data));
-}
-
-function writeFile(filename, data, options) {
-	return new Promise((resolve, reject) =>
-			fs.writeFile(filename, data || '', options || {}, err => {
-					if(err) reject(err);
-					else resolve();
-				})
-		);
-}
-
-function writeJSON(filename, data) {
-	return writeFile(filename, JSON.stringify(data));
-}
-
-function writeJSONPretty(filename, data) {
-	return writeFile(filename, JSON.stringify(data, null, '\t'));
+function promisify(name) {
+	return (...args) => new Promise((resolve, reject) => {
+			args.push(promRes(resolve, reject));
+			fs[name].apply(fs, args);
+		});
 }
 
 function access(path, mode) {
 	return new Promise((resolve, reject) =>
-			fs.access(path, mode, err => {
+			fs.access(
+				path,
+				mode,
+				err => {
 					if(err) reject(err);
 					else resolve(true);
-				})
+				}
+			)
 		);
 }
 
 function exists(path) {
 	return access(path)
-		.catch(err => { throw false; });
+	.catch(err => { throw false; });
+}
+
+function readFileUTF8(file, options) {
+	if(typeof options == 'object') {
+		options.encoding = 'utf8';
+	}
+	return readFile(
+			file,
+			options || 'utf8'
+		);
+}
+
+function readJSON(file) {
+	return readFileUTF8(file)
+		.then(data => JSON.parse(data));
+}
+
+function writeJSON(file, data) {
+	return writeFile(
+			file,
+			JSON.stringify(data || {})
+		);
+}
+
+function writeJSONPretty(file, data) {
+	return writeFile(
+			file,
+			JSON.stringify(
+					data,
+					null,
+					'\t'
+				)
+		);
 }
 
 module.exports = {
-		readFile,
-		readFileUTF8,
-		readJSON,
-		writeFile,
-		writeJSON,
-		writeJSONPretty,
-		access,
-		exists
-	};
+	access,
+	createReadStream: fs.createReadStream,
+	createWriteStream: fs.createWriteStream,
+	exists,
+	readFile,
+	readFileUTF8,
+	readJSON,
+	unwatchFile: fs.unwatchFile,
+	watch: fs.watch,
+	watchFile: fs.watchFile,
+	writeFile,
+	writeJSON,
+	writeJSONPretty
+};
+
+[	'appendFile', 'chmod', 'chown', 'close', 'fchmod', 'fchown', 'fdatasync',
+	'fstat', 'fsync', 'ftruncate', 'futimes', 'lchmod', 'lchown', 'link',
+	'lstat', 'mkdir', 'mkdtemp', 'open', 'read', 'readdir', 'readlink',
+	'realpath', 'rename', 'rmdir', 'stat', 'symlink', 'truncate', 'unlink',
+	'utimes', 'write'
+]
+.map(n => {
+		module.exports[n] = promisify(n);
+	});
